@@ -30,7 +30,29 @@ under mycroft.conf
         "model": "https://github.com/OpenVoiceOS/precise-lite-models/raw/master/wakewords/en/hey_mycroft.tflite",
         "expected_duration": 3,
         "trigger_level": 3,
-        "sensitivity": 0.5
+        "sensitivity": 0.5,
+        "fallback_ww": "hey_mycroft_precise"
+    },
+    "hey_mycroft_precise": {
+        "module": "ovos-ww-plugin-precise",
+        "version": "0.3",
+        "model": "https://github.com/MycroftAI/precise-data/raw/models-dev/hey-mycroft.tar.gz",
+        "expected_duration": 3,
+        "trigger_level": 3,
+        "sensitivity": 0.5,
+        "fallback_ww": "hey_mycroft_vosk"
+    },
+    "hey_mycroft_vosk": {
+        "module": "ovos-ww-plugin-vosk",
+        "samples": ["hey mycroft", "hey microsoft", "hey mike roft", "hey minecraft"],
+        "rule": "fuzzy",
+        "fallback_ww": "hey_mycroft_pocketsphinx"
+    },
+    "hey_mycroft_pocketsphinx": {
+        "module": "ovos-ww-plugin-pocketsphinx",
+        "phonemes": "HH EY . M AY K R AO F T",
+        "threshold": 1e-90,
+        "lang": "en-us"
     },
     "wake_up": {
         "module": "ovos-ww-plugin-pocketsphinx",
@@ -58,6 +80,7 @@ under mycroft.conf
     // Set 'record_wake_words' to save a copy of wake word triggers
     // as .wav files under: /'save_path'/mycroft_wake_words
     "record_wake_words": false,
+    
     // Set 'save_utterances' to save each sentence sent to STT -- by default
     // they are only kept briefly in-memory.  This can be useful for for
     // debugging or other custom purposes.  Recordings are saved
