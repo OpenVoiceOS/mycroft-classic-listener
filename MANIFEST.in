@@ -1,0 +1,6 @@
+include requirements.txt
+include LICENSE.md
+include README.md
+include mycroft_classic_listener/res/snd/start_listening.wav
+include mycroft_classic_listener/res/snd/acknowledge.mp3
+include mycroft_classic_listener/res/snd/error.mp3
