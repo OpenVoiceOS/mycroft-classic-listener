@@ -322,7 +322,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
 
     def __init__(self, wake_word_recognizer, watchdog=None):
         self._watchdog = watchdog or (lambda: None)  # Default to dummy func
-        self.config = Configuration.get()
+        self.config = Configuration()
         listener_config = self.config.get('listener')
         self.upload_url = listener_config['wake_word_upload']['url']
         self.upload_disabled = listener_config['wake_word_upload']['disable']

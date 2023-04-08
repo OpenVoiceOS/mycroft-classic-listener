@@ -23,7 +23,7 @@ from ovos_utils import (
 )
 from ovos_utils.enclosure.api import EnclosureAPI
 from ovos_utils.log import LOG
-from ovos_utils.messagebus import get_mycroft_bus
+from ovos_bus_client.client import MessageBusClient
 from ovos_utils.process_utils import ProcessStatus, StatusCallbackMap
 
 from mycroft_classic_listener.listener import RecognizerLoop
@@ -208,8 +208,9 @@ def main(ready_hook=on_ready, error_hook=on_error, stopping_hook=on_stopping,
     global loop
     global config
     try:
-        config = Configuration.get()
-        bus = get_mycroft_bus()
+        config = Configuration()
+        bus = MessageBusClient()
+        bus.run_in_thread()
         connect_bus_events(bus)
         callbacks = StatusCallbackMap(on_ready=ready_hook, on_error=error_hook,
                                       on_stopping=stopping_hook)
@@ -226,6 +227,7 @@ def main(ready_hook=on_ready, error_hook=on_error, stopping_hook=on_stopping,
         status.set_ready()
         wait_for_exit_signal()
         status.set_stopping()
+        bus.close()
 
 
 if __name__ == "__main__":

@@ -293,7 +293,7 @@ class RecognizerLoop(EventEmitter):
 
     def _load_config(self):
         """Load configuration parameters from configuration."""
-        config = Configuration.get()
+        config = Configuration()
         self.config_core = config
         self._config_hash = recognizer_conf_hash(config)
         self.lang = config.get('lang')
@@ -443,7 +443,7 @@ class RecognizerLoop(EventEmitter):
         while self.state.running:
             try:
                 time.sleep(1)
-                current_hash = recognizer_conf_hash(Configuration.get())
+                current_hash = recognizer_conf_hash(Configuration())
                 if current_hash != self._config_hash:
                     self._config_hash = current_hash
                     LOG.debug('Config has changed, reloading...')

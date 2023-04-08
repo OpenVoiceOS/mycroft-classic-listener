@@ -1,8 +1,10 @@
 # mycroft-classic-listener
 
-The classic mycroft-core listener updated to use OVOS tech.
+The classic mycroft-core listener updated to use OVOS packages.
 
-This does not support multiple hotwords, fallback hotwords, VAD, listening modes or Fallback STT
+This does not support instant_listen, multiple hotwords, VAD, listening modes or Fallback STT
+
+fallback hotwords are supported via OPM
 
 # Configuration
 
