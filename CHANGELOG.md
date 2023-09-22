@@ -1,5 +1,9 @@
 # Changelog
 
+## [V0.0.1a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/V0.0.1a1) (2023-04-08)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/V0.0.0...V0.0.1a1)
+
 ## [V0.0.0](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/V0.0.0) (2023-04-08)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/V0.0.0a1...V0.0.0)
