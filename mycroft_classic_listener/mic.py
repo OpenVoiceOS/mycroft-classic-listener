@@ -329,6 +329,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         self.wake_word_name = wake_word_recognizer.key_phrase
 
         self.overflow_exc = listener_config.get('overflow_exception', False)
+        self.signals_enabled = listener_config.get("enabled_signals", False)
 
         super().__init__()
         self.wake_word_recognizer = wake_word_recognizer
@@ -348,7 +349,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         if self.save_utterances and not isdir(self.saved_utterances_dir):
             os.mkdir(self.saved_utterances_dir)
 
-        self.mic_level_file = os.path.join(get_ipc_directory(), "mic_level")
+        self.mic_level_file = os.path.join(get_ipc_directory(config=self.config), "mic_level")
 
         # Signal statuses
         self._stop_signaled = False
@@ -480,18 +481,18 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         if self._listen_triggered:
             return True
 
-        # Pressing the Mark 1 button can start recording (unless
-        # it is being used to mean 'stop' instead)
-        if check_for_signal('buttonPress', 1):
-            # give other processes time to consume this signal if
-            # it was meant to be a 'stop'
-            sleep(0.25)
-            if check_for_signal('buttonPress'):
-                # Signal is still here, assume it was intended to
-                # begin recording
-                LOG.debug("Button Pressed, wakeword not needed")
-                return True
-
+        if self.signals_enabled:
+            # Pressing the Mark 1 button can start recording (unless
+            # it is being used to mean 'stop' instead)
+            if check_for_signal('buttonPress', 1):
+                # give other processes time to consume this signal if
+                # it was meant to be a 'stop'
+                sleep(0.25)
+                if check_for_signal('buttonPress'):
+                    # Signal is still here, assume it was intended to
+                    # begin recording
+                    LOG.debug("Button Pressed, wakeword not needed")
+                    return True
         return False
 
     def stop(self):
