@@ -64,12 +64,13 @@ def get_version():
 
 setup(
     name='mycroft-classic-listener',
+    packages=["mycroft_classic_listener"],
     version=get_version(),
     license='Apache-2.0',
     url='https://github.com/OpenVoiceOS/mycroft-classic-listener',
     description='ovos-core listener daemon client',
     include_package_data=True,
-    package_data={"": package_files('mycroft_classic_listener/res')},
+    package_data={"": package_files('mycroft_classic_listener')},
     install_requires=required('requirements.txt'),
     classifiers=[
         "Development Status :: 4 - Beta",
