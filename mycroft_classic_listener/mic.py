@@ -28,17 +28,16 @@ import speech_recognition
 from ovos_backend_client.api import DeviceApi
 from ovos_bus_client.session import SessionManager
 from ovos_config import Configuration
-from ovos_utils import resolve_resource_file
+from ovos_utils.file_utils import resolve_resource_file
 from ovos_utils.log import LOG
-from ovos_utils.signal import check_for_signal, get_ipc_directory
-from ovos_utils.sound import play_wav
+from ovos_utils.sound import play_audio
 from speech_recognition import (
     Microphone,
     AudioSource,
     AudioData
 )
 
-from .data_structures import RollingMean, CyclicAudioBuffer
+from mycroft_classic_listener.data_structures import RollingMean, CyclicAudioBuffer
 
 WakeWordData = namedtuple('WakeWordData',
                           ['audio', 'found', 'stopped', 'end_audio'])
@@ -329,7 +328,6 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         self.wake_word_name = wake_word_recognizer.key_phrase
 
         self.overflow_exc = listener_config.get('overflow_exception', False)
-        self.signals_enabled = listener_config.get("enabled_signals", False)
 
         super().__init__()
         self.wake_word_recognizer = wake_word_recognizer
@@ -348,8 +346,6 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         self.saved_utterances_dir = join(self.save_path, 'mycroft_utterances')
         if self.save_utterances and not isdir(self.saved_utterances_dir):
             os.mkdir(self.saved_utterances_dir)
-
-        self.mic_level_file = os.path.join(get_ipc_directory(config=self.config), "mic_level")
 
         # Signal statuses
         self._stop_signaled = False
@@ -454,24 +450,14 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
 
             # The phrase is complete if the noise_tracker end of sentence
             # criteria is met or if the  top-button is pressed
-            phrase_complete = (noise_tracker.recording_complete() or
-                               check_for_signal('buttonPress'))
+            phrase_complete = (noise_tracker.recording_complete())
 
             # Periodically write the energy level to the mic level file.
             if num_chunks % 10 == 0:
                 self._watchdog()
-                self.write_mic_level(energy, source)
 
         return byte_data
 
-    def write_mic_level(self, energy, source):
-        with open(self.mic_level_file, 'w') as f:
-            f.write('Energy:  cur={} thresh={:.3f} muted={}'.format(
-                energy,
-                self.energy_threshold,
-                int(source.muted)
-            )
-            )
 
     def _skip_wake_word(self):
         """Check if told programatically to skip the wake word
@@ -480,19 +466,6 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         """
         if self._listen_triggered:
             return True
-
-        if self.signals_enabled:
-            # Pressing the Mark 1 button can start recording (unless
-            # it is being used to mean 'stop' instead)
-            if check_for_signal('buttonPress', 1):
-                # give other processes time to consume this signal if
-                # it was meant to be a 'stop'
-                sleep(0.25)
-                if check_for_signal('buttonPress'):
-                    # Signal is still here, assume it was intended to
-                    # begin recording
-                    LOG.debug("Button Pressed, wakeword not needed")
-                    return True
         return False
 
     def stop(self):
@@ -637,7 +610,6 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
             # visualize the microphone input, e.g. a needle on a meter.
             if mic_write_counter % 3:
                 self._watchdog()
-                self.write_mic_level(energy, source)
             mic_write_counter += 1
 
             buffers_since_check += 1.0
@@ -667,7 +639,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
             self.config.get('sounds').get('start_listening'))
         if audio_file:
             source.mute()
-            play_wav(audio_file).wait()
+            play_audio(audio_file).wait()
             source.unmute()
             return True
         else:
