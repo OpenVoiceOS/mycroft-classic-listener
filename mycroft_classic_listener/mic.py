@@ -449,7 +449,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
 
             # The phrase is complete if the noise_tracker end of sentence
             # criteria is met or if the  top-button is pressed
-            phrase_complete = (noise_tracker.recording_complete())
+            phrase_complete = noise_tracker.recording_complete()
 
             # Periodically write the energy level to the mic level file.
             if num_chunks % 10 == 0:
