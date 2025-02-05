@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 import json
+import os.path
 import re
 import time
 from copy import deepcopy
@@ -26,7 +27,7 @@ from ovos_config import Configuration
 from ovos_plugin_manager.stt import OVOSSTTFactory as STTFactory
 from ovos_plugin_manager.wakewords import OVOSWakeWordFactory as HotWordFactory
 from ovos_utils.log import LOG
-from ovos_utils.sound import play_error_sound
+from ovos_utils.sound import play_audio
 from pyee import EventEmitter
 from requests import RequestException
 from requests.exceptions import ConnectionError
@@ -247,7 +248,7 @@ class AudioConsumer(Thread):
             LOG.error(e)
             LOG.error("Speech Recognition could not understand audio")
 
-        play_error_sound()
+        play_audio(f"{os.path.dirname(__file__)}/res/snd/error.mp3")
         return None
 
     def __speak(self, utterance):

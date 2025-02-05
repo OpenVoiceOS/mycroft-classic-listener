@@ -12,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from threading import Lock
-from threading import Thread
+from threading import Lock, Thread
 
 from ovos_backend_client.identity import IdentityManager
 from ovos_bus_client.client import MessageBusClient
 from ovos_bus_client.message import Message
 from ovos_config import Configuration
-from ovos_utils import (
-    create_daemon,
-    wait_for_exit_signal
-)
-from ovos_utils.enclosure.api import EnclosureAPI
+from ovos_utils.thread_utils import wait_for_exit_signal
+from ovos_bus_client.apis.enclosure import EnclosureAPI
 from ovos_utils.log import LOG
 from ovos_utils.process_utils import ProcessStatus, StatusCallbackMap
 
