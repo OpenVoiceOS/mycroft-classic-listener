@@ -28,7 +28,6 @@ import speech_recognition
 from ovos_backend_client.api import DeviceApi
 from ovos_bus_client.session import SessionManager
 from ovos_config import Configuration
-from ovos_utils.file_utils import resolve_resource_file
 from ovos_utils.log import LOG
 from ovos_utils.sound import play_audio
 from speech_recognition import (
@@ -635,8 +634,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         return AudioData(raw_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
     def mute_and_confirm_listening(self, source):
-        audio_file = resolve_resource_file(
-            self.config.get('sounds').get('start_listening'))
+        audio_file = f"{os.path.dirname(__file__)}/res/snd/start_listening.wav"
         if audio_file:
             source.mute()
             play_audio(audio_file).wait()
