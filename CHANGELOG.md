@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1a2](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a2) (2025-12-19)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a1...0.1.1a2)
+
+**Merged pull requests:**
+
+- Update actions/setup-python action to v6 [\#8](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/8) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.1.1a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a1) (2025-12-18)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.0...0.1.1a1)
