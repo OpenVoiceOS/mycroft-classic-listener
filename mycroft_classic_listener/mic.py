@@ -109,6 +109,12 @@ class MutableStream:
             return True  # Assume the stream has been closed and thusly stopped
 
     def stop_stream(self):
+        """
+        Stop the underlying wrapped audio stream.
+        
+        Returns:
+            The value returned by the wrapped stream's `stop_stream()` call (typically `None`).
+        """
         return self.wrapped_stream.stop_stream()
 
 
@@ -130,6 +136,20 @@ class Microphone:
     Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
     """
     def __init__(self, device_index=None, sample_rate=None, chunk_size=1024):
+        """
+        Initialize a Microphone instance, selecting the audio device and configuring sample parameters.
+        
+        Parameters:
+            device_index (int | None): Index of the input device to use; if None, the default input device is used.
+            sample_rate (int | None): Desired sampling rate in Hz; if None, the device's default sample rate is used.
+            chunk_size (int): Number of audio frames per buffer (CHUNK).
+        
+        Raises:
+            AssertionError: If arguments are invalid (wrong types or out of range) or if the selected device reports an invalid default sample rate.
+        
+        Side effects:
+            Queries PyAudio for device information and sets instance attributes: pyaudio_module, device_index, format, SAMPLE_WIDTH, SAMPLE_RATE, CHUNK, audio, and stream.
+        """
         assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
         assert sample_rate is None or (isinstance(sample_rate, int) and sample_rate > 0), "Sample rate must be None or a positive integer"
         assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
@@ -160,7 +180,13 @@ class Microphone:
     @staticmethod
     def get_pyaudio():
         """
-        Imports the pyaudio module and checks its version. Throws exceptions if pyaudio can't be found or a wrong version is installed
+        Import and return the PyAudio module, raising an error if it is not available.
+        
+        Returns:
+            pyaudio: The imported PyAudio module.
+        
+        Raises:
+            AttributeError: If the PyAudio package is not installed.
         """
         try:
             import pyaudio
@@ -171,9 +197,12 @@ class Microphone:
     @staticmethod
     def list_microphone_names():
         """
-        Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
-
-        The index of each microphone's name in the returned list is the same as its device index when creating a ``Microphone`` instance - if you want to use the microphone at index 3 in the returned list, use ``Microphone(device_index=3)``.
+        List the display names of all available audio input devices.
+        
+        Each entry corresponds to the device index used when creating a Microphone (e.g., the name at index 3 is for Microphone(device_index=3)). If a device's name cannot be retrieved, its entry will be `None`.
+        
+        Returns:
+            list: A list of device names (strings) or `None` for devices with no retrievable name.
         """
         audio = Microphone.get_pyaudio().PyAudio()
         try:
@@ -188,9 +217,12 @@ class Microphone:
     @staticmethod
     def list_working_microphones():
         """
-        Returns a dictionary mapping device indices to microphone names, for microphones that are currently hearing sounds. When using this function, ensure that your microphone is unmuted and make some noise at it to ensure it will be detected as working.
-
-        Each key in the returned dictionary can be passed to the ``Microphone`` constructor to use that microphone. For example, if the return value is ``{3: "HDA Intel PCH: ALC3232 Analog (hw:1,0)"}``, you can do ``Microphone(device_index=3)`` to use that microphone.
+        Detects microphones that are currently producing audible input.
+        
+        Callers should ensure the microphone is unmuted and produce sound while this runs so active devices are detected.
+        
+        Returns:
+            result (dict): Mapping of device index (int) to microphone name (str) for devices that appear to be receiving audio; empty if none detected.
         """
         pyaudio_module = Microphone.get_pyaudio()
         audio = pyaudio_module.PyAudio()
@@ -226,6 +258,16 @@ class Microphone:
         return result
 
     def __enter__(self):
+        """
+        Enter the microphone context and open the underlying PyAudio stream.
+        
+        If opening the stream succeeds, stores a MicrophoneStream in self.stream and the PyAudio
+        instance in self.audio. If opening the stream raises an exception, the PyAudio instance
+        is terminated and no stream is retained.
+        
+        Returns:
+            self: The Microphone instance with an opened stream when successful.
+        """
         assert self.stream is None, "This audio source is already inside a context manager"
         self.audio = self.pyaudio_module.PyAudio()
         try:
@@ -240,6 +282,11 @@ class Microphone:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Close the microphone stream and terminate the PyAudio instance when exiting the context.
+        
+        Ensures the stream is closed and the stream reference is cleared even if closing raises an error; always calls audio.terminate(). Does not suppress exceptions from the surrounding context.
+        """
         try:
             self.stream.close()
         finally:
@@ -248,12 +295,32 @@ class Microphone:
 
     class MicrophoneStream(object):
         def __init__(self, pyaudio_stream):
+            """
+            Initialize the MicrophoneStream wrapper.
+            
+            Parameters:
+                pyaudio_stream: The active PyAudio stream object to wrap; expected to provide read(size, exception_on_overflow=False), stop_stream(), and close() methods.
+            """
             self.pyaudio_stream = pyaudio_stream
 
         def read(self, size):
+            """
+            Read up to `size` frames of audio from the underlying PyAudio stream without raising on buffer overflow.
+            
+            Parameters:
+                size (int): Number of frames to read from the stream.
+            
+            Returns:
+                bytes: Raw audio bytes for the frames read.
+            """
             return self.pyaudio_stream.read(size, exception_on_overflow=False)
 
         def close(self):
+            """
+            Stop and close the underlying PyAudio stream.
+            
+            If the stream is not already stopped, attempts to stop it before closing the stream to release resources.
+            """
             try:
                 # sometimes, if the stream isn't stopped, closing the stream throws an exception
                 if not self.pyaudio_stream.is_stopped():
@@ -265,7 +332,16 @@ class Microphone:
 class MutableMicrophone(Microphone):
     def __init__(self, device_index=None, sample_rate=16000, chunk_size=1024,
                  mute=False):
-        Microphone.__init__(self, device_index=device_index,
+        """
+                 Initialize a MutableMicrophone configured for a specific input device and audio parameters, and set its initial mute state.
+                 
+                 Parameters:
+                     device_index (int or None): Index of the audio input device to use, or None to auto-select the default.
+                     sample_rate (int): Sampling rate in Hz for audio capture.
+                     chunk_size (int): Number of frames per read from the audio stream.
+                     mute (bool): If True, start the microphone muted; otherwise start unmuted.
+                 """
+                 Microphone.__init__(self, device_index=device_index,
                             sample_rate=sample_rate, chunk_size=chunk_size)
         self.muted = False
         if mute:
@@ -430,13 +506,16 @@ class NoiseTracker:
         return self.level <= self.min_level
 
     def recording_complete(self):
-        """Has the end creteria for the recording been met.
-
-        If the noise level has decresed from a loud level to a low level
-        the user has stopped speaking.
-
-        Alternatively if a lot of silence was recorded without detecting
-        a loud enough phrase.
+        """
+        Determine whether the current recording should be considered complete.
+        
+        The recording is considered complete when the noise level is at or below
+        the quiet threshold for longer than `silence_after_loud` and either
+        enough loud chunks have been observed to qualify as a phrase or the
+        recording has exceeded `max_silence_duration`.
+        
+        Returns:
+            bool: `True` if the recording end criteria are met, `False` otherwise.
         """
         too_much_silence = (self.silence_duration > self.max_silence_duration)
         if too_much_silence:
@@ -463,6 +542,15 @@ class ResponsiveRecognizer:
     SEC_BETWEEN_WW_CHECKS = 0.2
 
     def __init__(self, wake_word_recognizer, watchdog=None):
+        """
+        Initialize the ResponsiveRecognizer with the given wake-word recognizer and optional watchdog.
+        
+        Loads listener configuration, initializes audio and dynamic energy thresholding parameters, recording timeouts, and directories for saving captured wake words and utterances (if enabled). Also stores flags and internal state used to control listening and recording behaviour.
+        
+        Parameters:
+            wake_word_recognizer: An object responsible for detecting wake words; must expose `key_phrase` and provide the detection interface used by this class.
+            watchdog (callable, optional): A callable invoked periodically for liveness monitoring; defaults to a no-op if not provided.
+        """
         self._watchdog = watchdog or (lambda: None)  # Default to dummy func
         self.config = Configuration()
         listener_config = self.config.get('listener')
@@ -518,11 +606,13 @@ class ResponsiveRecognizer:
     # extracted from https://github.com/Uberi/speech_recognition
     def adjust_for_ambient_noise(self, source: Microphone, duration: float = 1) -> None:
         """
-        Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
-
-        Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech - will stop early if any speech is detected.
-
-        The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
+        Calibrates the recognizer's energy threshold from ambient noise captured by a Microphone.
+        
+        Reads audio chunks from the provided Microphone (which must be entered and have an active stream) for up to `duration` seconds and updates `self.energy_threshold` using a damping-weighted average of measured RMS energy scaled by `self.dynamic_energy_ratio`. Intended to tune sensitivity to current background noise; callers should ensure the sampled period does not contain speech.
+        
+        Parameters:
+            source (Microphone): An entered Microphone instance with an active stream.
+            duration (float): Maximum number of seconds to sample ambient audio (should be >= 0.5 for representative calibration).
         """
         assert isinstance(source, Microphone), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"  # type: ignore[attr-defined]
@@ -544,6 +634,15 @@ class ResponsiveRecognizer:
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
     def record_sound_chunk(self, source):
+        """
+        Read a single audio chunk from the microphone stream.
+        
+        Parameters:
+            source (Microphone): An active Microphone instance with an open stream.
+        
+        Returns:
+            bytes: Raw audio bytes for one chunk (size = source.CHUNK * sample width).
+        """
         return source.stream.read(source.CHUNK, self.overflow_exc)
 
     @staticmethod
@@ -557,25 +656,18 @@ class ResponsiveRecognizer:
             stream=None,
             ww_frames=None
     ):
-        """Record an entire spoken phrase.
-
-        Essentially, this code waits for a period of silence and then returns
-        the audio.  If silence isn't detected, it will terminate and return
-        a buffer of self.recording_timeout duration.
-
-        Args:
-            source (Microphone):  Source producing the audio chunks
-            sec_per_buffer (float):  Fractional number of seconds in each chunk
-            stream (AudioStreamHandler): Stream target that will receive chunks
-                                         of the utterance audio while it is
-                                         being recorded.
-            ww_frames (deque):  Frames of audio data from the last part of wake
-                                word detection.
-
-        Returns:
-            bytearray: complete audio buffer recorded, including any
-                       silence at the end of the user's utterance
         """
+            Record audio for a single spoken phrase until end-of-utterance silence or a timeout.
+            
+            Parameters:
+                source (Microphone): Active microphone providing audio chunks (must have SAMPLE_WIDTH).
+                sec_per_buffer (float): Duration in seconds of each audio chunk read from the source.
+                stream (optional): Target with stream_start() and stream_chunk(bytes) to receive chunks as they are recorded.
+                ww_frames (optional deque): Pre-filled frames from wake-word detection to prepend to the recording.
+            
+            Returns:
+                bytearray: Recorded audio bytes for the phrase, including any trailing silence.
+            """
         noise_tracker = NoiseTracker(0, 25, sec_per_buffer,
                                      self.MIN_LOUD_SEC_PER_PHRASE,
                                      self.recording_timeout_with_silence)
@@ -714,11 +806,19 @@ class ResponsiveRecognizer:
                 self._upload_wakeword(audio, metadata)
 
     def _wait_until_wake_word(self, source, sec_per_buffer):
-        """Listen continuously on source until a wake word is spoken
-
+        """
+        Listen to the given Microphone until a wake word is detected or listening is stopped.
+        
         Args:
-            source (Microphone):  Source producing the audio chunks
-            sec_per_buffer (float):  Fractional number of seconds in each chunk
+            source (Microphone): Audio source providing chunks and metadata (sample rate/width).
+            sec_per_buffer (float): Duration in seconds of each audio chunk.
+        
+        Returns:
+            WakeWordData: Named tuple with fields:
+                - audio: bytes of the audio immediately preceding detection (plus trailing silence) suitable for STT.
+                - found: `True` if a wake word was detected, `False` otherwise.
+                - stopped: `True` if listening was interrupted via stop signal, `False` otherwise.
+                - end_audio: deque of the raw frames captured immediately after detection (may be empty).
         """
 
         # The maximum audio in seconds to keep for transcribing a phrase
@@ -805,22 +905,18 @@ class ResponsiveRecognizer:
             return False
 
     def listen(self, source, emitter, stream=None):
-        """Listens for chunks of audio that Mycroft should perform STT on.
-
-        This will listen continuously for a wake-up-word, then return the
-        audio chunk containing the spoken phrase that comes immediately
-        afterwards.
-
-        Args:
-            source (Microphone):  Source producing the audio chunks
-            emitter (EventEmitter): Emitter for notifications of when recording
-                                    begins and ends.
-            stream (AudioStreamHandler): Stream target that will receive chunks
-                                         of the utterance audio while it is
-                                         being recorded
-
+        """
+        Listen for a wake word and record the user's utterance that immediately follows.
+        
+        Waits for a wake word from the provided Microphone source, emits start/stop events via the emitter, optionally plays a confirmation sound, records the following phrase (excluding the wake word), and may save the utterance to disk depending on configuration.
+        
+        Parameters:
+            source (Microphone): Microphone producing audio chunks; must be entered/active.
+            emitter (EventEmitter): Event emitter used to signal "recognizer_loop:record_begin" and "recognizer_loop:record_end".
+            stream (AudioStreamHandler): Optional stream target that will receive utterance chunks while recording.
+        
         Returns:
-            AudioData: audio with the user's utterance, minus the wake-up-word
+            AudioData: Recorded audio containing the user's utterance, excluding the wake word.
         """
         assert isinstance(source, Microphone), "Source must be a Microphone"
 

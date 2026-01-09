@@ -150,7 +150,18 @@ class AudioConsumer(Thread):
 
     def __init__(self, state, queue, emitter, stt,
                  wakeup_recognizer, wakeword_recognizer):
-        super(AudioConsumer, self).__init__()
+        """
+                 Initialize the AudioConsumer which reads queued audio and dispatches it to wake-word and STT handlers.
+                 
+                 Parameters:
+                     state (RecognizerLoopState): Shared run/sleep state used to control loop behavior.
+                     queue (queue.Queue): Source of incoming audio and stream messages.
+                     emitter (EventEmitter): Event bus for emitting recognition and control events.
+                     stt: Speech-to-text engine used to transcribe audio frames.
+                     wakeup_recognizer: Hotword engine that detects a "wake up" phrase to exit sleeping state.
+                     wakeword_recognizer: Hotword engine that detects the configured wake word to start recognition.
+                 """
+                 super(AudioConsumer, self).__init__()
         self.daemon = True
         self.queue = queue
         self.state = state
@@ -160,6 +171,11 @@ class AudioConsumer(Thread):
         self.wakeword_recognizer = wakeword_recognizer
 
     def run(self):
+        """
+        Continuously consume messages from the audio queue while the consumer is running.
+        
+        Logs that it is waiting for a wake word and repeatedly invokes read() until RecognizerLoopState.running is False.
+        """
         LOG.info("Waiting for wake word")
         while self.state.running:
             self.read()
@@ -221,6 +237,21 @@ class AudioConsumer(Thread):
             LOG.warning("Audio too short to be processed")
 
     def transcribe(self, audio):
+        """
+        Attempt to convert an audio clip to transcribed text.
+        
+        Parameters:
+        	audio: Audio data object containing captured frames and metadata for STT processing.
+        
+        Returns:
+        	str or None: The lowercased, trimmed transcription if successful; `None` if transcription failed or no words were recognized.
+        
+        Notes:
+        	On failure this method emits recognizer loop events:
+        	- emits 'recognizer_loop:speech.recognition.unknown' when no text could be transcribed,
+        	- emits 'recognizer_loop:no_internet' on connection errors.
+        	It also plays a short error audio file before returning `None`.
+        """
         def send_unknown_intent():
             """ Send message that nothing was transcribed. """
             self.emitter.emit('recognizer_loop:speech.recognition.unknown')
@@ -317,16 +348,13 @@ class RecognizerLoop(EventEmitter):
         self.state = RecognizerLoopState()
 
     def create_wake_word_recognizer(self):
-        """Create a local recognizer to hear the wakeup word
-
-        For example 'Hey Mycroft'.
-
-        The method uses the hotword entry for the selected wakeword, if
-        one is missing it will fall back to the old phoneme and threshold in
-        the listener entry in the config.
-
-        If the hotword entry doesn't include phoneme and threshold values these
-        will be patched in using the defaults from the config listnere entry.
+        """
+        Create a local wake word recognizer for the configured wake word.
+        
+        Uses the hotword entry for the configured wake word; if no hotword entry exists, falls back to legacy listener configuration for phonemes and threshold when available. If phoneme or threshold values are missing from both places, the recognizer will be created without those overrides.
+        
+        Returns:
+            recognizer: An instance of the hot word recognizer created by HotWordFactory.
         """
         LOG.info('Creating wake word engine')
         word = self.config.get('wake_word', 'hey mycroft')
@@ -364,12 +392,24 @@ class RecognizerLoop(EventEmitter):
         return HotWordFactory.create_hotword(word, config)
 
     def create_wakeup_recognizer(self):
+        """
+        Create a wake-up hotword recognizer using the configured stand-up word.
+        
+        Reads 'stand_up_word' from the recognizer configuration (defaults to "wake up") and returns a HotWordFactory-created recognizer for that word.
+        
+        Returns:
+            A hotword recognizer instance configured to detect the stand-up word.
+        """
         LOG.info("creating stand up word engine")
         word = self.config.get("stand_up_word", "wake up")
         return HotWordFactory.create_hotword(word)
 
     def start_async(self):
-        """Start consumer and producer threads."""
+        """
+        Start audio producer and consumer threads and prepare streaming support.
+        
+        Sets state.running to True, creates an STT engine and an internal Queue, initializes a stream handler if the STT engine supports streaming, and constructs and starts AudioProducer and AudioConsumer threads (assigned to self.producer and self.consumer).
+        """
         self.state.running = True
         stt = STTFactory.create()
         queue = Queue()
