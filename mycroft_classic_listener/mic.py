@@ -24,17 +24,11 @@ from time import sleep, time as get_time
 
 import pyaudio
 import requests
-import speech_recognition
-from ovos_backend_client.api import DeviceApi
 from ovos_bus_client.session import SessionManager
 from ovos_config import Configuration
 from ovos_utils.log import LOG
 from ovos_utils.sound import play_audio
-from speech_recognition import (
-    Microphone,
-    AudioSource,
-    AudioData
-)
+from ovos_plugin_manager.utils.audio import AudioData, AudioFile
 
 from mycroft_classic_listener.data_structures import RollingMean, CyclicAudioBuffer
 
@@ -116,6 +110,156 @@ class MutableStream:
 
     def stop_stream(self):
         return self.wrapped_stream.stop_stream()
+
+
+# Microphone class extracted from https://github.com/Uberi/speech_recognition
+class Microphone:
+    """
+    Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
+
+    This will throw an ``AttributeError`` if you don't have PyAudio (0.2.11 or later) installed.
+
+    If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
+
+    A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
+
+    The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz). If not specified, the value of ``sample_rate`` is determined automatically from the system's microphone settings.
+
+    Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some CPUs, such as those in older Raspberry Pi models, can't keep up if this value is too high.
+
+    Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
+    """
+    def __init__(self, device_index=None, sample_rate=None, chunk_size=1024):
+        assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
+        assert sample_rate is None or (isinstance(sample_rate, int) and sample_rate > 0), "Sample rate must be None or a positive integer"
+        assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
+
+        # set up PyAudio
+        self.pyaudio_module = self.get_pyaudio()
+        audio = self.pyaudio_module.PyAudio()
+        try:
+            count = audio.get_device_count()  # obtain device count
+            if device_index is not None:  # ensure device index is in range
+                assert 0 <= device_index < count, "Device index out of range ({} devices available; device index should be between 0 and {} inclusive)".format(count, count - 1)
+            if sample_rate is None:  # automatically set the sample rate to the hardware's default sample rate if not specified
+                device_info = audio.get_device_info_by_index(device_index) if device_index is not None else audio.get_default_input_device_info()
+                assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info["defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
+                sample_rate = int(device_info["defaultSampleRate"])
+        finally:
+            audio.terminate()
+
+        self.device_index = device_index
+        self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
+        self.SAMPLE_WIDTH = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
+        self.SAMPLE_RATE = sample_rate  # sampling rate in Hertz
+        self.CHUNK = chunk_size  # number of frames stored in each buffer
+
+        self.audio = None
+        self.stream = None
+
+    @staticmethod
+    def get_pyaudio():
+        """
+        Imports the pyaudio module and checks its version. Throws exceptions if pyaudio can't be found or a wrong version is installed
+        """
+        try:
+            import pyaudio
+        except ImportError:
+            raise AttributeError("Could not find PyAudio; check installation")
+        return pyaudio
+
+    @staticmethod
+    def list_microphone_names():
+        """
+        Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
+
+        The index of each microphone's name in the returned list is the same as its device index when creating a ``Microphone`` instance - if you want to use the microphone at index 3 in the returned list, use ``Microphone(device_index=3)``.
+        """
+        audio = Microphone.get_pyaudio().PyAudio()
+        try:
+            result = []
+            for i in range(audio.get_device_count()):
+                device_info = audio.get_device_info_by_index(i)
+                result.append(device_info.get("name"))
+        finally:
+            audio.terminate()
+        return result
+
+    @staticmethod
+    def list_working_microphones():
+        """
+        Returns a dictionary mapping device indices to microphone names, for microphones that are currently hearing sounds. When using this function, ensure that your microphone is unmuted and make some noise at it to ensure it will be detected as working.
+
+        Each key in the returned dictionary can be passed to the ``Microphone`` constructor to use that microphone. For example, if the return value is ``{3: "HDA Intel PCH: ALC3232 Analog (hw:1,0)"}``, you can do ``Microphone(device_index=3)`` to use that microphone.
+        """
+        pyaudio_module = Microphone.get_pyaudio()
+        audio = pyaudio_module.PyAudio()
+        try:
+            result = {}
+            for device_index in range(audio.get_device_count()):
+                device_info = audio.get_device_info_by_index(device_index)
+                device_name = device_info.get("name")
+                assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info["defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
+                try:
+                    # read audio
+                    pyaudio_stream = audio.open(
+                        input_device_index=device_index, channels=1, format=pyaudio_module.paInt16,
+                        rate=int(device_info["defaultSampleRate"]), input=True
+                    )
+                    try:
+                        buffer = pyaudio_stream.read(1024)
+                        if not pyaudio_stream.is_stopped(): pyaudio_stream.stop_stream()
+                    finally:
+                        pyaudio_stream.close()
+                except Exception:
+                    continue
+
+                # compute RMS of debiased audio
+                energy = -audioop.rms(buffer, 2)
+                energy_bytes = bytes([energy & 0xFF, (energy >> 8) & 0xFF])
+                debiased_energy = audioop.rms(audioop.add(buffer, energy_bytes * (len(buffer) // 2), 2), 2)
+
+                if debiased_energy > 30:  # probably actually audio
+                    result[device_index] = device_name
+        finally:
+            audio.terminate()
+        return result
+
+    def __enter__(self):
+        assert self.stream is None, "This audio source is already inside a context manager"
+        self.audio = self.pyaudio_module.PyAudio()
+        try:
+            self.stream = Microphone.MicrophoneStream(
+                self.audio.open(
+                    input_device_index=self.device_index, channels=1, format=self.format,
+                    rate=self.SAMPLE_RATE, frames_per_buffer=self.CHUNK, input=True,
+                )
+            )
+        except Exception:
+            self.audio.terminate()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            self.stream.close()
+        finally:
+            self.stream = None
+            self.audio.terminate()
+
+    class MicrophoneStream(object):
+        def __init__(self, pyaudio_stream):
+            self.pyaudio_stream = pyaudio_stream
+
+        def read(self, size):
+            return self.pyaudio_stream.read(size, exception_on_overflow=False)
+
+        def close(self):
+            try:
+                # sometimes, if the stream isn't stopped, closing the stream throws an exception
+                if not self.pyaudio_stream.is_stopped():
+                    self.pyaudio_stream.stop_stream()
+            finally:
+                self.pyaudio_stream.close()
 
 
 class MutableMicrophone(Microphone):
@@ -303,7 +447,7 @@ class NoiseTracker:
                 (self._loud_enough() or too_much_silence))
 
 
-class ResponsiveRecognizer(speech_recognition.Recognizer):
+class ResponsiveRecognizer:
     # Padding of silence when feeding to pocketsphinx
     SILENCE_SEC = 0.01
 
@@ -328,7 +472,16 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
 
         self.overflow_exc = listener_config.get('overflow_exception', False)
 
-        super().__init__()
+        self.energy_threshold = 300  # minimum audio energy to consider for recording
+        self.dynamic_energy_threshold = True
+        self.dynamic_energy_adjustment_damping = 0.15
+        self.dynamic_energy_ratio = 1.5
+        self.pause_threshold = 0.8  # seconds of non-speaking audio before a phrase is considered complete
+        self.operation_timeout = None  # seconds after an internal operation (e.g., an API request) starts before it times out, or ``None`` for no timeout
+
+        self.phrase_threshold = 0.3  # minimum seconds of speaking audio before we consider the speaking audio a phrase - values below this are ignored (for filtering out clicks and pops)
+        self.non_speaking_duration = 0.5  # seconds of non-speaking audio to keep on both sides of the recording
+
         self.wake_word_recognizer = wake_word_recognizer
         self.audio = pyaudio.PyAudio()
         self.multiplier = listener_config.get('multiplier')
@@ -350,7 +503,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         self._stop_signaled = False
         self._listen_triggered = False
 
-        self._account_id = None
+        self.account_id = "0"
 
         # The maximum seconds a phrase can be recorded,
         # provided there is noise the entire time
@@ -362,23 +515,33 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         self.recording_timeout_with_silence = listener_config.get(
             'recording_timeout_with_silence', 3.0)
 
-    @property
-    def account_id(self):
-        """Fetch account from backend when needed.
-
-        If an error occurs it's handled and a temporary value is returned.
-        When a value is received it will be cached until next start.
+    # extracted from https://github.com/Uberi/speech_recognition
+    def adjust_for_ambient_noise(self, source: Microphone, duration: float = 1) -> None:
         """
-        if not self._account_id:
-            try:
-                self._account_id = DeviceApi().get()['user']['uuid']
-            except (requests.RequestException, AttributeError):
-                pass  # These are expected and won't be reported
-            except Exception as e:
-                LOG.debug('Unhandled exception while determining device_id, '
-                          'Error: {}'.format(repr(e)))
+        Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
 
-        return self._account_id or '0'
+        Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech - will stop early if any speech is detected.
+
+        The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
+        """
+        assert isinstance(source, Microphone), "Source must be an audio source"
+        assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"  # type: ignore[attr-defined]
+        assert self.pause_threshold >= self.non_speaking_duration >= 0
+
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE  # type: ignore[attr-defined]
+        elapsed_time = 0
+
+        # adjust energy threshold until a phrase starts
+        while True:
+            elapsed_time += seconds_per_buffer
+            if elapsed_time > duration: break
+            buffer = source.stream.read(source.CHUNK)  # type: ignore[attr-defined]
+            energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # type: ignore[attr-defined]  # energy of the audio signal
+
+            # dynamically adjust the energy threshold using asymmetric weighted average
+            damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
+            target_energy = energy * self.dynamic_energy_ratio
+            self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
     def record_sound_chunk(self, source):
         return source.stream.read(source.CHUNK, self.overflow_exc)
@@ -401,7 +564,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         a buffer of self.recording_timeout duration.
 
         Args:
-            source (AudioSource):  Source producing the audio chunks
+            source (Microphone):  Source producing the audio chunks
             sec_per_buffer (float):  Fractional number of seconds in each chunk
             stream (AudioStreamHandler): Stream target that will receive chunks
                                          of the utterance audio while it is
@@ -554,14 +717,13 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         """Listen continuously on source until a wake word is spoken
 
         Args:
-            source (AudioSource):  Source producing the audio chunks
+            source (Microphone):  Source producing the audio chunks
             sec_per_buffer (float):  Fractional number of seconds in each chunk
         """
 
         # The maximum audio in seconds to keep for transcribing a phrase
         # The wake word must fit in this time
-        ww_duration = self.wake_word_recognizer.expected_duration
-        ww_test_duration = max(3, ww_duration)
+        ww_duration = ww_test_duration = 3
 
         mic_write_counter = 0
         num_silent_bytes = int(self.SILENCE_SEC * source.SAMPLE_RATE *
@@ -618,8 +780,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
             if buffers_since_check > buffers_per_check:
                 buffers_since_check -= buffers_per_check
                 audio_data = audio_buffer.get_last(test_size) + silence
-                said_wake_word = \
-                    self.wake_word_recognizer.found_wake_word(audio_data)
+                said_wake_word = self.wake_word_recognizer.found_wake_word()
 
         self._listen_triggered = False
         return WakeWordData(audio_data, said_wake_word,
@@ -651,7 +812,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         afterwards.
 
         Args:
-            source (AudioSource):  Source producing the audio chunks
+            source (Microphone):  Source producing the audio chunks
             emitter (EventEmitter): Emitter for notifications of when recording
                                     begins and ends.
             stream (AudioStreamHandler): Stream target that will receive chunks
@@ -661,7 +822,7 @@ class ResponsiveRecognizer(speech_recognition.Recognizer):
         Returns:
             AudioData: audio with the user's utterance, minus the wake-up-word
         """
-        assert isinstance(source, AudioSource), "Source must be an AudioSource"
+        assert isinstance(source, Microphone), "Source must be a Microphone"
 
         #        bytes_per_sec = source.SAMPLE_RATE * source.SAMPLE_WIDTH
         sec_per_buffer = float(source.CHUNK) / source.SAMPLE_RATE

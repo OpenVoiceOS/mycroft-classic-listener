@@ -14,7 +14,6 @@
 #
 from threading import Lock, Thread
 
-from ovos_backend_client.identity import IdentityManager
 from ovos_bus_client.client import MessageBusClient
 from ovos_bus_client.message import Message
 from ovos_config import Configuration
@@ -127,15 +126,6 @@ def handle_mic_get_status(event):
     bus.emit(event.response(data))
 
 
-def handle_paired(event):
-    """Update identity information with pairing data.
-
-    This is done here to make sure it's only done in a single place.
-    TODO: Is there a reason this isn't done directly in the pairing skill?
-    """
-    IdentityManager.update(event.data)
-
-
 def handle_audio_start(event):
     """Mute recognizer loop."""
     if config.get("listener").get("mute_during_output"):
@@ -193,7 +183,6 @@ def connect_bus_events(bus):
     bus.on('mycroft.mic.unmute', handle_mic_unmute)
     bus.on('mycroft.mic.get_status', handle_mic_get_status)
     bus.on('mycroft.mic.listen', handle_mic_listen)
-    bus.on("mycroft.paired", handle_paired)
     bus.on('recognizer_loop:audio_output_start', handle_audio_start)
     bus.on('recognizer_loop:audio_output_end', handle_audio_end)
     bus.on('mycroft.stop', handle_stop)

@@ -21,7 +21,6 @@ from queue import Queue, Empty
 from threading import Thread
 
 import pyaudio
-import speech_recognition as sr
 from ovos_bus_client.session import SessionManager
 from ovos_config import Configuration
 from ovos_plugin_manager.stt import OVOSSTTFactory as STTFactory
@@ -161,6 +160,7 @@ class AudioConsumer(Thread):
         self.wakeword_recognizer = wakeword_recognizer
 
     def run(self):
+        LOG.info("Waiting for wake word")
         while self.state.running:
             self.read()
 
@@ -235,8 +235,6 @@ class AudioConsumer(Thread):
                 send_unknown_intent()
                 LOG.info('no words were transcribed')
             return text
-        except sr.RequestError as e:
-            LOG.error("Could not request Speech Recognition {0}".format(e))
         except ConnectionError as e:
             LOG.error("Connection Error: {0}".format(e))
 
@@ -363,13 +361,12 @@ class RecognizerLoop(EventEmitter):
                             'configuration')
                 config[word]['threshold'] = thresh
 
-        return HotWordFactory.create_hotword(word, config, self.lang,
-                                             loop=self)
+        return HotWordFactory.create_hotword(word, config)
 
     def create_wakeup_recognizer(self):
         LOG.info("creating stand up word engine")
         word = self.config.get("stand_up_word", "wake up")
-        return HotWordFactory.create_hotword(word, lang=self.lang, loop=self)
+        return HotWordFactory.create_hotword(word)
 
     def start_async(self):
         """Start consumer and producer threads."""
