@@ -656,17 +656,17 @@ class ResponsiveRecognizer:
             ww_frames=None
     ):
         """
-            Record audio for a single spoken phrase until end-of-utterance silence or a timeout.
-            
-            Parameters:
-                source (Microphone): Active microphone providing audio chunks (must have SAMPLE_WIDTH).
-                sec_per_buffer (float): Duration in seconds of each audio chunk read from the source.
-                stream (optional): Target with stream_start() and stream_chunk(bytes) to receive chunks as they are recorded.
-                ww_frames (optional deque): Pre-filled frames from wake-word detection to prepend to the recording.
-            
-            Returns:
-                bytearray: Recorded audio bytes for the phrase, including any trailing silence.
-            """
+        Record audio for a single spoken phrase until end-of-utterance silence or a timeout.
+        
+        Parameters:
+            source (Microphone): Active microphone providing audio chunks (must have SAMPLE_WIDTH).
+            sec_per_buffer (float): Duration in seconds of each audio chunk read from the source.
+            stream (optional): Target with stream_start() and stream_chunk(bytes) to receive chunks as they are recorded.
+            ww_frames (optional deque): Pre-filled frames from wake-word detection to prepend to the recording.
+        
+        Returns:
+            bytearray: Recorded audio bytes for the phrase, including any trailing silence.
+        """
         noise_tracker = NoiseTracker(0, 25, sec_per_buffer,
                                      self.MIN_LOUD_SEC_PER_PHRASE,
                                      self.recording_timeout_with_silence)
