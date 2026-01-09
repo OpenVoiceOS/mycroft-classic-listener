@@ -121,13 +121,23 @@ def handle_mic_listen(_):
 
 
 def handle_mic_get_status(event):
-    """Query microphone mute status."""
+    """
+    Query the current microphone mute state and emit it as a response on the provided event.
+    
+    Parameters:
+        event: Message-like object with a `response(data)` method used to send the result. The emitted response contains `{'muted': True}` if the microphone is muted, `{'muted': False}` otherwise.
+    """
     data = {'muted': loop.is_muted()}
     bus.emit(event.response(data))
 
 
 def handle_audio_start(event):
-    """Mute recognizer loop."""
+    """
+    Mute the recognizer loop when audio output begins if configured.
+    
+    Parameters:
+        event: The incoming message/event that triggered audio start (unused).
+    """
     if config.get("listener").get("mute_during_output"):
         loop.mute()
 
@@ -176,6 +186,14 @@ def connect_loop_events(loop):
 
 def connect_bus_events(bus):
     # Register handlers for events on main Mycroft messagebus
+    """
+    Register message-bus event handlers used by the speech listener.
+    
+    Binds internal handler functions to the bus topics the listener expects (e.g., open, sleep/wake, microphone control, audio output events, and stop).
+    
+    Parameters:
+    	bus: The message bus client on which to register event handlers.
+    """
     bus.on('open', handle_open)
     bus.on('recognizer_loop:sleep', handle_sleep)
     bus.on('recognizer_loop:wake_up', handle_wake_up)
