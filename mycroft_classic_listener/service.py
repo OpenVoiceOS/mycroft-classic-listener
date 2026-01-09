@@ -14,7 +14,6 @@
 #
 from threading import Lock, Thread
 
-from ovos_backend_client.identity import IdentityManager
 from ovos_bus_client.client import MessageBusClient
 from ovos_bus_client.message import Message
 from ovos_config import Configuration
@@ -122,22 +121,23 @@ def handle_mic_listen(_):
 
 
 def handle_mic_get_status(event):
-    """Query microphone mute status."""
+    """
+    Query the current microphone mute state and emit it as a response on the provided event.
+    
+    Parameters:
+        event: Message-like object with a `response(data)` method used to send the result. The emitted response contains `{'muted': True}` if the microphone is muted, `{'muted': False}` otherwise.
+    """
     data = {'muted': loop.is_muted()}
     bus.emit(event.response(data))
 
 
-def handle_paired(event):
-    """Update identity information with pairing data.
-
-    This is done here to make sure it's only done in a single place.
-    TODO: Is there a reason this isn't done directly in the pairing skill?
-    """
-    IdentityManager.update(event.data)
-
-
 def handle_audio_start(event):
-    """Mute recognizer loop."""
+    """
+    Mute the recognizer loop when audio output begins if configured.
+    
+    Parameters:
+        event: The incoming message/event that triggered audio start (unused).
+    """
     if config.get("listener").get("mute_during_output"):
         loop.mute()
 
@@ -186,6 +186,14 @@ def connect_loop_events(loop):
 
 def connect_bus_events(bus):
     # Register handlers for events on main Mycroft messagebus
+    """
+    Register message-bus event handlers used by the speech listener.
+    
+    Binds internal handler functions to the bus topics the listener expects (e.g., open, sleep/wake, microphone control, audio output events, and stop).
+    
+    Parameters:
+    	bus: The message bus client on which to register event handlers.
+    """
     bus.on('open', handle_open)
     bus.on('recognizer_loop:sleep', handle_sleep)
     bus.on('recognizer_loop:wake_up', handle_wake_up)
@@ -193,7 +201,6 @@ def connect_bus_events(bus):
     bus.on('mycroft.mic.unmute', handle_mic_unmute)
     bus.on('mycroft.mic.get_status', handle_mic_get_status)
     bus.on('mycroft.mic.listen', handle_mic_listen)
-    bus.on("mycroft.paired", handle_paired)
     bus.on('recognizer_loop:audio_output_start', handle_audio_start)
     bus.on('recognizer_loop:audio_output_end', handle_audio_end)
     bus.on('mycroft.stop', handle_stop)
