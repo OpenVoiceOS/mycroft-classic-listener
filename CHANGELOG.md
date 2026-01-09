@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1a6](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a6) (2026-01-09)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a4...0.1.1a6)
+
+**Merged pull requests:**
+
+- chore\(deps\): update actions/checkout action to v6 [\#5](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/5) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.1.1a4](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a4) (2026-01-09)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a3...0.1.1a4)
