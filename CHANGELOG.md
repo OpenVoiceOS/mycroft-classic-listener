@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1a4](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a4) (2026-01-09)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a3...0.1.1a4)
+
+**Merged pull requests:**
+
+- refactor: replace speech\_recognition with ovos plugin manager [\#12](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/12) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.1a3](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a3) (2025-12-19)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a2...0.1.1a3)
