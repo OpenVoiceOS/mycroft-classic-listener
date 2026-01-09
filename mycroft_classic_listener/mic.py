@@ -333,16 +333,15 @@ class MutableMicrophone(Microphone):
     def __init__(self, device_index=None, sample_rate=16000, chunk_size=1024,
                  mute=False):
         """
-                 Initialize a MutableMicrophone configured for a specific input device and audio parameters, and set its initial mute state.
-                 
-                 Parameters:
-                     device_index (int or None): Index of the audio input device to use, or None to auto-select the default.
-                     sample_rate (int): Sampling rate in Hz for audio capture.
-                     chunk_size (int): Number of frames per read from the audio stream.
-                     mute (bool): If True, start the microphone muted; otherwise start unmuted.
-                 """
-                 Microphone.__init__(self, device_index=device_index,
-                            sample_rate=sample_rate, chunk_size=chunk_size)
+        Initialize a MutableMicrophone configured for a specific input device and audio parameters, and set its initial mute state.
+        
+        Parameters:
+            device_index (int or None): Index of the audio input device to use, or None to auto-select the default.
+            sample_rate (int): Sampling rate in Hz for audio capture.
+            chunk_size (int): Number of frames per read from the audio stream.
+            mute (bool): If True, start the microphone muted; otherwise start unmuted.
+        """
+        Microphone.__init__(self, device_index=device_index, sample_rate=sample_rate, chunk_size=chunk_size)
         self.muted = False
         if mute:
             self.mute()
