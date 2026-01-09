@@ -151,17 +151,17 @@ class AudioConsumer(Thread):
     def __init__(self, state, queue, emitter, stt,
                  wakeup_recognizer, wakeword_recognizer):
         """
-                 Initialize the AudioConsumer which reads queued audio and dispatches it to wake-word and STT handlers.
-                 
-                 Parameters:
-                     state (RecognizerLoopState): Shared run/sleep state used to control loop behavior.
-                     queue (queue.Queue): Source of incoming audio and stream messages.
-                     emitter (EventEmitter): Event bus for emitting recognition and control events.
-                     stt: Speech-to-text engine used to transcribe audio frames.
-                     wakeup_recognizer: Hotword engine that detects a "wake up" phrase to exit sleeping state.
-                     wakeword_recognizer: Hotword engine that detects the configured wake word to start recognition.
-                 """
-                 super(AudioConsumer, self).__init__()
+        Initialize the AudioConsumer which reads queued audio and dispatches it to wake-word and STT handlers.
+        
+        Parameters:
+            state (RecognizerLoopState): Shared run/sleep state used to control loop behavior.
+            queue (queue.Queue): Source of incoming audio and stream messages.
+            emitter (EventEmitter): Event bus for emitting recognition and control events.
+            stt: Speech-to-text engine used to transcribe audio frames.
+            wakeup_recognizer: Hotword engine that detects a "wake up" phrase to exit sleeping state.
+            wakeword_recognizer: Hotword engine that detects the configured wake word to start recognition.
+        """
+        super(AudioConsumer, self).__init__()
         self.daemon = True
         self.queue = queue
         self.state = state
