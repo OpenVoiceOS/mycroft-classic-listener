@@ -16,21 +16,27 @@
 from ovos_bus_client.client import MessageBusClient
 from ovos_utils import wait_for_exit_signal
 
-from mycroft_classic_listener.service import ClassicListener, on_error, on_stopping, on_ready
+from mycroft_classic_listener.service import (
+    ClassicListener,
+    on_error,
+    on_stopping,
+    on_ready,
+)
 
 
-def main(ready_hook=on_ready, error_hook=on_error, stopping_hook=on_stopping,
-         watchdog=lambda: None):
+def main(
+    ready_hook=on_ready,
+    error_hook=on_error,
+    stopping_hook=on_stopping,
+    watchdog=lambda: None,
+):
     global bus
     global loop
     global config
     try:
         bus = MessageBusClient()
         bus.run_in_thread()
-        service = ClassicListener(bus, ready_hook,
-                                  error_hook,
-                                  stopping_hook,
-                                  watchdog)
+        service = ClassicListener(bus, ready_hook, error_hook, stopping_hook, watchdog)
         service.daemon = True
         service.start()
 

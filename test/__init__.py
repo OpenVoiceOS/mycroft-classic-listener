@@ -13,13 +13,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# START_VERSION_BLOCK
-VERSION_MAJOR = 0
-VERSION_MINOR = 1
-VERSION_BUILD = 1
-VERSION_ALPHA = 6
-# END_VERSION_BLOCK
-
-__version__ = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_BUILD}" + (
-    f"a{VERSION_ALPHA}" if VERSION_ALPHA else ""
-)
