@@ -86,7 +86,7 @@ class CyclicAudioBuffer:
         """
         buff = self._buffer + data
         if len(buff) > self.size:
-            buff = buff[-self.size:]
+            buff = buff[-self.size :]
         self._buffer = buff
 
     def get(self):

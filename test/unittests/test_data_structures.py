@@ -1,9 +1,25 @@
+# OpenVoiceOS - A community-driven voice assistant platform
+# Copyright 2026 OpenVoiceOS
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 """
 Unit tests for mycroft_classic_listener.data_structures.
 
 Covers RollingMean and CyclicAudioBuffer — pure data structures with
 no external dependencies; all tests are deterministic.
 """
+
 import unittest
 
 from mycroft_classic_listener.data_structures import CyclicAudioBuffer, RollingMean
@@ -12,6 +28,7 @@ from mycroft_classic_listener.data_structures import CyclicAudioBuffer, RollingM
 # ---------------------------------------------------------------------------
 # RollingMean
 # ---------------------------------------------------------------------------
+
 
 class TestRollingMeanInit(unittest.TestCase):
     def test_value_none_before_any_sample(self):
@@ -87,6 +104,7 @@ class TestRollingMeanSliding(unittest.TestCase):
 # CyclicAudioBuffer
 # ---------------------------------------------------------------------------
 
+
 class TestCyclicAudioBufferInit(unittest.TestCase):
     def test_initial_data_truncated_to_size(self):
         data = b"\x01" * 20
@@ -156,7 +174,7 @@ class TestCyclicAudioBufferIndexing(unittest.TestCase):
 
     def test_getitem_single(self):
         buf = CyclicAudioBuffer(size=10, initial_data=b"\x0a\x0b\x0c")
-        self.assertEqual(buf[0], 0x0a)
+        self.assertEqual(buf[0], 0x0A)
 
     def test_len(self):
         buf = CyclicAudioBuffer(size=10, initial_data=b"\xff" * 7)
@@ -167,8 +185,10 @@ class TestCyclicAudioBufferIndexing(unittest.TestCase):
 # Version
 # ---------------------------------------------------------------------------
 
+
 class TestVersion(unittest.TestCase):
     def test_version_importable(self):
         from mycroft_classic_listener.version import __version__
+
         self.assertIsInstance(__version__, str)
         self.assertRegex(__version__, r"^\d+\.\d+\.\d+")

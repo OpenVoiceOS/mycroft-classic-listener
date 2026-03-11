@@ -1,13 +1,29 @@
+# OpenVoiceOS - A community-driven voice assistant platform
+# Copyright 2026 OpenVoiceOS
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 """
 Unit tests for mycroft_classic_listener.service module-level bus handler functions.
 
 Each handler reads from (or writes to) the module globals `bus` and `loop`.
 Tests patch those globals directly so no real bus or audio hardware is needed.
 """
+
 import sys
 import types
 import unittest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 # Stub out pyaudio before any listener imports try to load it
 _pyaudio_stub = types.ModuleType("pyaudio")
@@ -15,12 +31,13 @@ _pyaudio_stub.PyAudio = MagicMock
 _pyaudio_stub.paInt16 = 8
 sys.modules.setdefault("pyaudio", _pyaudio_stub)
 
-from ovos_bus_client.message import Message
+from ovos_bus_client.message import Message  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_bus():
     return MagicMock()
@@ -36,9 +53,11 @@ def _make_loop():
 # handle_record_begin / handle_record_end
 # ---------------------------------------------------------------------------
 
+
 class TestHandleRecordBegin(unittest.TestCase):
     def test_emits_record_begin(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         svc.handle_record_begin()
@@ -47,6 +66,7 @@ class TestHandleRecordBegin(unittest.TestCase):
 
     def test_context_has_client_name(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         svc.handle_record_begin()
@@ -57,6 +77,7 @@ class TestHandleRecordBegin(unittest.TestCase):
 class TestHandleRecordEnd(unittest.TestCase):
     def test_emits_record_end(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         svc.handle_record_end()
@@ -68,9 +89,11 @@ class TestHandleRecordEnd(unittest.TestCase):
 # handle_no_internet / handle_awoken
 # ---------------------------------------------------------------------------
 
+
 class TestHandleNoInternet(unittest.TestCase):
     def test_emits_no_internet(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         svc.handle_no_internet()
@@ -81,6 +104,7 @@ class TestHandleNoInternet(unittest.TestCase):
 class TestHandleAwoken(unittest.TestCase):
     def test_emits_mycroft_awoken(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         svc.handle_awoken()
@@ -92,9 +116,11 @@ class TestHandleAwoken(unittest.TestCase):
 # handle_wakeword
 # ---------------------------------------------------------------------------
 
+
 class TestHandleWakeword(unittest.TestCase):
     def test_forwards_wakeword_event(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         event = {"utterance": "hey mycroft"}
@@ -104,6 +130,7 @@ class TestHandleWakeword(unittest.TestCase):
 
     def test_passes_event_data(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         event = {"utterance": "hey mycroft"}
@@ -116,9 +143,11 @@ class TestHandleWakeword(unittest.TestCase):
 # handle_utterance
 # ---------------------------------------------------------------------------
 
+
 class TestHandleUtterance(unittest.TestCase):
     def test_emits_utterance_message(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         event = {"utterances": ["hello world"], "lang": "en-us"}
@@ -128,6 +157,7 @@ class TestHandleUtterance(unittest.TestCase):
 
     def test_context_destination_is_skills(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         event = {"utterances": ["test"]}
@@ -138,6 +168,7 @@ class TestHandleUtterance(unittest.TestCase):
     def test_ident_popped_into_context(self):
         """ident key is moved from event data into context."""
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         event = {"utterances": ["test"], "ident": "abc123"}
@@ -149,6 +180,7 @@ class TestHandleUtterance(unittest.TestCase):
     def test_no_ident_in_event(self):
         """Without ident in event, no ident in context."""
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         event = {"utterances": ["test"]}
@@ -161,9 +193,11 @@ class TestHandleUtterance(unittest.TestCase):
 # handle_unknown / handle_speak
 # ---------------------------------------------------------------------------
 
+
 class TestHandleUnknown(unittest.TestCase):
     def test_emits_speech_recognition_unknown(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         svc.handle_unknown()
@@ -174,6 +208,7 @@ class TestHandleUnknown(unittest.TestCase):
 class TestHandleSpeak(unittest.TestCase):
     def test_emits_speak(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         event = {"utterance": "hello"}
@@ -183,6 +218,7 @@ class TestHandleSpeak(unittest.TestCase):
 
     def test_passes_event_data(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         svc.bus = bus
         event = {"utterance": "hello"}
@@ -195,9 +231,11 @@ class TestHandleSpeak(unittest.TestCase):
 # handle_sleep / handle_wake_up
 # ---------------------------------------------------------------------------
 
+
 class TestHandleSleep(unittest.TestCase):
     def test_calls_loop_sleep(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
         svc.handle_sleep(MagicMock())
@@ -207,6 +245,7 @@ class TestHandleSleep(unittest.TestCase):
 class TestHandleWakeUp(unittest.TestCase):
     def test_calls_loop_awaken(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
         svc.handle_wake_up(MagicMock())
@@ -217,9 +256,11 @@ class TestHandleWakeUp(unittest.TestCase):
 # handle_mic_mute / handle_mic_unmute / handle_stop
 # ---------------------------------------------------------------------------
 
+
 class TestHandleMicMute(unittest.TestCase):
     def test_calls_loop_mute(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
         svc.handle_mic_mute(MagicMock())
@@ -229,6 +270,7 @@ class TestHandleMicMute(unittest.TestCase):
 class TestHandleMicUnmute(unittest.TestCase):
     def test_calls_loop_unmute(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
         svc.handle_mic_unmute(MagicMock())
@@ -238,6 +280,7 @@ class TestHandleMicUnmute(unittest.TestCase):
 class TestHandleStop(unittest.TestCase):
     def test_calls_loop_force_unmute(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
         svc.handle_stop(MagicMock())
@@ -248,9 +291,11 @@ class TestHandleStop(unittest.TestCase):
 # handle_mic_listen
 # ---------------------------------------------------------------------------
 
+
 class TestHandleMicListen(unittest.TestCase):
     def test_calls_trigger_listen(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
         svc.handle_mic_listen(MagicMock())
@@ -261,9 +306,11 @@ class TestHandleMicListen(unittest.TestCase):
 # handle_mic_get_status
 # ---------------------------------------------------------------------------
 
+
 class TestHandleMicGetStatus(unittest.TestCase):
     def test_emits_response_with_muted_false(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         lp = _make_loop()
         lp.is_muted.return_value = False
@@ -279,6 +326,7 @@ class TestHandleMicGetStatus(unittest.TestCase):
 
     def test_emits_response_with_muted_true(self):
         import mycroft_classic_listener.service as svc
+
         bus = _make_bus()
         lp = _make_loop()
         lp.is_muted.return_value = True
@@ -296,22 +344,29 @@ class TestHandleMicGetStatus(unittest.TestCase):
 # handle_audio_start / handle_audio_end
 # ---------------------------------------------------------------------------
 
+
 class TestHandleAudioStart(unittest.TestCase):
     def test_mutes_when_mute_during_output_true(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
-        with patch("mycroft_classic_listener.service.config",
-                   {"listener": {"mute_during_output": True}}):
+        with patch(
+            "mycroft_classic_listener.service.config",
+            {"listener": {"mute_during_output": True}},
+        ):
             svc.handle_audio_start(MagicMock())
         lp.mute.assert_called_once()
 
     def test_no_mute_when_mute_during_output_false(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
-        with patch("mycroft_classic_listener.service.config",
-                   {"listener": {"mute_during_output": False}}):
+        with patch(
+            "mycroft_classic_listener.service.config",
+            {"listener": {"mute_during_output": False}},
+        ):
             svc.handle_audio_start(MagicMock())
         lp.mute.assert_not_called()
 
@@ -319,19 +374,25 @@ class TestHandleAudioStart(unittest.TestCase):
 class TestHandleAudioEnd(unittest.TestCase):
     def test_unmutes_when_mute_during_output_true(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
-        with patch("mycroft_classic_listener.service.config",
-                   {"listener": {"mute_during_output": True}}):
+        with patch(
+            "mycroft_classic_listener.service.config",
+            {"listener": {"mute_during_output": True}},
+        ):
             svc.handle_audio_end(MagicMock())
         lp.unmute.assert_called_once()
 
     def test_no_unmute_when_mute_during_output_false(self):
         import mycroft_classic_listener.service as svc
+
         lp = _make_loop()
         svc.loop = lp
-        with patch("mycroft_classic_listener.service.config",
-                   {"listener": {"mute_during_output": False}}):
+        with patch(
+            "mycroft_classic_listener.service.config",
+            {"listener": {"mute_during_output": False}},
+        ):
             svc.handle_audio_end(MagicMock())
         lp.unmute.assert_not_called()
 
@@ -340,9 +401,11 @@ class TestHandleAudioEnd(unittest.TestCase):
 # connect_loop_events / connect_bus_events
 # ---------------------------------------------------------------------------
 
+
 class TestConnectLoopEvents(unittest.TestCase):
     def test_registers_all_expected_events(self):
         import mycroft_classic_listener.service as svc
+
         lp = MagicMock()
         svc.connect_loop_events(lp)
         registered = {c[0][0] for c in lp.on.call_args_list}
@@ -362,6 +425,7 @@ class TestConnectLoopEvents(unittest.TestCase):
 class TestConnectBusEvents(unittest.TestCase):
     def test_registers_all_expected_bus_events(self):
         import mycroft_classic_listener.service as svc
+
         bus = MagicMock()
         svc.connect_bus_events(bus)
         registered = {c[0][0] for c in bus.on.call_args_list}
