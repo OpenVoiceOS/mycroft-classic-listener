@@ -1,44 +1,12 @@
 # Changelog
 
-## [0.1.1a6](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a6) (2026-01-09)
+## [0.2.0a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.2.0a1) (2026-03-11)
 
-[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a4...0.1.1a6)
-
-**Merged pull requests:**
-
-- chore\(deps\): update actions/checkout action to v6 [\#5](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/5) ([renovate[bot]](https://github.com/apps/renovate))
-
-## [0.1.1a4](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a4) (2026-01-09)
-
-[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a3...0.1.1a4)
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1...0.2.0a1)
 
 **Merged pull requests:**
 
-- refactor: replace speech\_recognition with ovos plugin manager [\#12](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/12) ([JarbasAl](https://github.com/JarbasAl))
-
-## [0.1.1a3](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a3) (2025-12-19)
-
-[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a2...0.1.1a3)
-
-**Merged pull requests:**
-
-- Update dependency python to 3.14 [\#4](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/4) ([renovate[bot]](https://github.com/apps/renovate))
-
-## [0.1.1a2](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a2) (2025-12-19)
-
-[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1a1...0.1.1a2)
-
-**Merged pull requests:**
-
-- Update actions/setup-python action to v6 [\#8](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/8) ([renovate[bot]](https://github.com/apps/renovate))
-
-## [0.1.1a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.1.1a1) (2025-12-18)
-
-[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.0...0.1.1a1)
-
-**Merged pull requests:**
-
-- Configure Renovate [\#3](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/3) ([renovate[bot]](https://github.com/apps/renovate))
+- feat: add pyproject.toml, CI workflows, unit tests, full docs [\#17](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/17) ([JarbasAl](https://github.com/JarbasAl))
 
 
 
