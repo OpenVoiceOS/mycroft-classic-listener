@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.2.1a1) (2026-06-06)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.2.0a1...0.2.1a1)
+
+**Merged pull requests:**
+
+- fix\(deps\): allow ovos-bus-client 2.x \(widen cap to \<3.0.0\) [\#19](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/19) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.0a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.2.0a1) (2026-03-11)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.1.1...0.2.0a1)
