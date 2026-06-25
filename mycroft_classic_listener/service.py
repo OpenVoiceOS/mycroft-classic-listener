@@ -16,6 +16,7 @@ from threading import Lock, Thread
 
 from ovos_bus_client.client import MessageBusClient
 from ovos_bus_client.message import Message
+from ovos_spec_tools import SpecMessage
 from ovos_config import Configuration
 from ovos_utils.thread_utils import wait_for_exit_signal
 from ovos_bus_client.apis.enclosure import EnclosureAPI
@@ -34,14 +35,14 @@ def handle_record_begin():
     """Forward internal bus message to external bus."""
     LOG.info("Begin Recording...")
     context = {"client_name": "mycroft_listener", "source": "audio"}
-    bus.emit(Message("recognizer_loop:record_begin", context=context))
+    bus.emit(Message(SpecMessage.LISTENER_RECORD_STARTED, context=context))
 
 
 def handle_record_end():
     """Forward internal bus message to external bus."""
     LOG.info("End Recording...")
     context = {"client_name": "mycroft_listener", "source": "audio"}
-    bus.emit(Message("recognizer_loop:record_end", context=context))
+    bus.emit(Message(SpecMessage.LISTENER_RECORD_ENDED, context=context))
 
 
 def handle_no_internet():
@@ -54,7 +55,7 @@ def handle_awoken():
     """Forward mycroft.awoken to the messagebus."""
     LOG.info("Listener is now Awake: ")
     context = {"client_name": "mycroft_listener", "source": "audio"}
-    bus.emit(Message("mycroft.awoken", context=context))
+    bus.emit(Message(SpecMessage.LISTENER_AWOKEN, context=context))
 
 
 def handle_wakeword(event):
@@ -72,7 +73,7 @@ def handle_utterance(event):
     if "ident" in event:
         ident = event.pop("ident")
         context["ident"] = ident
-    bus.emit(Message("recognizer_loop:utterance", event, context))
+    bus.emit(Message(SpecMessage.UTTERANCE, event, context))
 
 
 def handle_unknown():
@@ -191,14 +192,14 @@ def connect_bus_events(bus):
         bus: The message bus client on which to register event handlers.
     """
     bus.on("open", handle_open)
-    bus.on("recognizer_loop:sleep", handle_sleep)
+    bus.on(SpecMessage.LISTENER_SLEEP, handle_sleep)
     bus.on("recognizer_loop:wake_up", handle_wake_up)
     bus.on("mycroft.mic.mute", handle_mic_mute)
     bus.on("mycroft.mic.unmute", handle_mic_unmute)
     bus.on("mycroft.mic.get_status", handle_mic_get_status)
-    bus.on("mycroft.mic.listen", handle_mic_listen)
-    bus.on("recognizer_loop:audio_output_start", handle_audio_start)
-    bus.on("recognizer_loop:audio_output_end", handle_audio_end)
+    bus.on(SpecMessage.MIC_LISTEN, handle_mic_listen)
+    bus.on(SpecMessage.AUDIO_OUTPUT_STARTED, handle_audio_start)
+    bus.on(SpecMessage.AUDIO_OUTPUT_ENDED, handle_audio_end)
     bus.on("mycroft.stop", handle_stop)
 
 

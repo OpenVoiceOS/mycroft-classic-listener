@@ -62,7 +62,7 @@ class TestHandleRecordBegin(unittest.TestCase):
         svc.bus = bus
         svc.handle_record_begin()
         msg = bus.emit.call_args[0][0]
-        self.assertEqual(msg.msg_type, "recognizer_loop:record_begin")
+        self.assertEqual(msg.msg_type, "ovos.listener.record.started")
 
     def test_context_has_client_name(self):
         import mycroft_classic_listener.service as svc
@@ -82,7 +82,7 @@ class TestHandleRecordEnd(unittest.TestCase):
         svc.bus = bus
         svc.handle_record_end()
         msg = bus.emit.call_args[0][0]
-        self.assertEqual(msg.msg_type, "recognizer_loop:record_end")
+        self.assertEqual(msg.msg_type, "ovos.listener.record.ended")
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +109,7 @@ class TestHandleAwoken(unittest.TestCase):
         svc.bus = bus
         svc.handle_awoken()
         msg = bus.emit.call_args[0][0]
-        self.assertEqual(msg.msg_type, "mycroft.awoken")
+        self.assertEqual(msg.msg_type, "ovos.listener.awoken")
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +153,7 @@ class TestHandleUtterance(unittest.TestCase):
         event = {"utterances": ["hello world"], "lang": "en-us"}
         svc.handle_utterance(event)
         msg = bus.emit.call_args[0][0]
-        self.assertEqual(msg.msg_type, "recognizer_loop:utterance")
+        self.assertEqual(msg.msg_type, "ovos.utterance.handle")
 
     def test_context_destination_is_skills(self):
         import mycroft_classic_listener.service as svc
@@ -431,14 +431,14 @@ class TestConnectBusEvents(unittest.TestCase):
         registered = {c[0][0] for c in bus.on.call_args_list}
         expected = {
             "open",
-            "recognizer_loop:sleep",
+            "ovos.listener.sleep",
             "recognizer_loop:wake_up",
             "mycroft.mic.mute",
             "mycroft.mic.unmute",
             "mycroft.mic.get_status",
-            "mycroft.mic.listen",
-            "recognizer_loop:audio_output_start",
-            "recognizer_loop:audio_output_end",
+            "ovos.mic.listen",
+            "ovos.audio.output.started",
+            "ovos.audio.output.ended",
             "mycroft.stop",
         }
         self.assertEqual(registered, expected)
