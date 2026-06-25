@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/1.0.0a1) (2026-06-25)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.2.2a1...1.0.0a1)
+
+**Breaking changes:**
+
+- feat!: migrate bus topics to ovos spec namespace [\#23](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/23) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.2.2a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/0.2.2a1) (2026-06-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.2.1a1...0.2.2a1)
