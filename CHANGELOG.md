@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/1.0.1a1) (2026-06-28)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/1.0.0a1...1.0.1a1)
+
+**Merged pull requests:**
+
+- fix: lift ovos-spec-tools upper bound \(spec-tools 1.x\) [\#25](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/25) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.0.0a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/1.0.0a1) (2026-06-25)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/0.2.2a1...1.0.0a1)
