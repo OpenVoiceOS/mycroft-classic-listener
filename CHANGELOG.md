@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2a2](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/1.0.2a2) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/1.0.2a1...1.0.2a2)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#27](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/27) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.0.2a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/1.0.2a1) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/1.0.1a1...1.0.2a1)
