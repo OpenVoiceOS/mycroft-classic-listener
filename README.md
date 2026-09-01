@@ -1,14 +1,19 @@
 # mycroft-classic-listener
 
-The classic mycroft-core listener updated to use OVOS packages.
+`mycroft-classic-listener` is the original Mycroft voice listener, ported to run on
+OVOS packages. It does not support `instant_listen`, multiple hotwords, VAD, listening
+modes, or fallback STT. It supports fallback hotwords through OPM (OVOS Plugin Manager).
 
-This does not support instant_listen, multiple hotwords, VAD, listening modes or Fallback STT
+## Install
 
-fallback hotwords are supported via OPM
+```bash
+uv pip install -e .
+```
 
-# Configuration
+## Usage
 
-under mycroft.conf
+The listener reads its settings from the `stt`, `hotwords`, and `listener` sections of
+`mycroft.conf`. Set the STT plugin, the hotword plugins, and the listener behavior there.
 
 ```javascript
 {
@@ -22,7 +27,7 @@ under mycroft.conf
     // it is a google proxy equivalent to mycroft selene
     "ovos-stt-plugin-server": {"url": "https://stt.openvoiceos.com/stt"}
   },
-  
+
   // Hotword configurations
   "hotwords": {
     "hey_mycroft": {
@@ -61,7 +66,7 @@ under mycroft.conf
         "lang": "en-us"
     }
   },
-  
+
   // Settings used by the wake-up-word listener
   // Override: REMOTE
   "listener": {
@@ -80,7 +85,7 @@ under mycroft.conf
     // Set 'record_wake_words' to save a copy of wake word triggers
     // as .wav files under: /'save_path'/mycroft_wake_words
     "record_wake_words": false,
-    
+
     // Set 'save_utterances' to save each sentence sent to STT -- by default
     // they are only kept briefly in-memory.  This can be useful for for
     // debugging or other custom purposes.  Recordings are saved
@@ -131,3 +136,13 @@ under mycroft.conf
   }
 }
 ```
+
+## Related projects
+
+- [OpenVoiceOS/ovos-dinkum-listener](https://github.com/OpenVoiceOS/ovos-dinkum-listener): the default OVOS listener, with support for VAD, multiple hotwords, and instant listen.
+- [OpenVoiceOS/ovos-simple-listener](https://github.com/OpenVoiceOS/ovos-simple-listener): a minimal listener that shares the same `recognizer_loop:*` messagebus contract.
+- [OpenVoiceOS/ovos-plugin-manager](https://github.com/OpenVoiceOS/ovos-plugin-manager): resolves the STT, hotword, and VAD plugins configured above.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
