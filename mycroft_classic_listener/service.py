@@ -68,7 +68,7 @@ def handle_utterance(event):
     context = {
         "client_name": "mycroft_listener",
         "source": "audio",
-        "destination": ["skills"],
+        "destination": "skills",
     }
     if "ident" in event:
         ident = event.pop("ident")

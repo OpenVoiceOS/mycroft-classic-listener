@@ -163,7 +163,7 @@ class TestHandleUtterance(unittest.TestCase):
         event = {"utterances": ["test"]}
         svc.handle_utterance(event)
         msg = bus.emit.call_args[0][0]
-        self.assertEqual(msg.context.get("destination"), ["skills"])
+        self.assertEqual(msg.context.get("destination"), "skills")
 
     def test_ident_popped_into_context(self):
         """ident key is moved from event data into context."""
