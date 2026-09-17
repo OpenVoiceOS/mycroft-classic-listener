@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3a1](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/1.0.3a1) (2026-09-17)
+
+[Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/1.0.2a2...1.0.3a1)
+
+**Merged pull requests:**
+
+- fix: emit destination as a string \(OVOS-MSG-1 §3.3\) [\#31](https://github.com/OpenVoiceOS/mycroft-classic-listener/pull/31) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [1.0.2a2](https://github.com/OpenVoiceOS/mycroft-classic-listener/tree/1.0.2a2) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/mycroft-classic-listener/compare/1.0.2a1...1.0.2a2)
